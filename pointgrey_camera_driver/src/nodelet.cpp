@@ -218,6 +218,9 @@ private:
     // Get a serial number through ros
     int serial = 0;
 
+    // default to using the image timestamp
+    pnh.param("use_embedded_time", use_embedded_time_, true);
+
     XmlRpc::XmlRpcValue serial_xmlrpc;
     pnh.getParam("serial", serial_xmlrpc);
     if (serial_xmlrpc.getType() == XmlRpc::XmlRpcValue::TypeInt)
@@ -490,7 +493,15 @@ private:
 
             wfov_image->temperature = pg_.getCameraTemperature();
 
-            ros::Time time = ros::Time::now();
+            ros::Time time;
+            if (use_embedded_time_)
+            {
+                time = wfov_image->image.header.stamp;
+            }
+            else
+            {
+                time = ros::Time::now();
+            }
             wfov_image->header.stamp = time;
             wfov_image->image.header.stamp = time;
 
@@ -592,6 +603,9 @@ private:
   size_t roi_height_; ///< Camera Info ROI height
   size_t roi_width_; ///< Camera Info ROI width
   bool do_rectify_; ///< Whether or not to rectify as if part of an image.  Set to false if whole image, and true if in ROI mode.
+
+  // use image timestamp or overwrite image header with current ros time
+  bool use_embedded_time_;
 
   // For GigE cameras:
   /// If true, GigE packet size is automatically determined, otherwise packet_size_ is used:
